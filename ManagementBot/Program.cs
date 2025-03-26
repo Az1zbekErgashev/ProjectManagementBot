@@ -4,8 +4,18 @@ using ManagementBot.Service;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 
-var builder = WebApplication.CreateBuilder(args);
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    EnvironmentName = environment
+});
+
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
 
 var botToken = builder.Configuration["TelegramBot:Token"];
 builder.Services.AddSingleton<ITelegramBotClient>(_ => new TelegramBotClient(botToken));
