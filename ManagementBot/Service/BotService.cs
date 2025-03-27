@@ -306,7 +306,7 @@ namespace ManagementBot.Service
 
                     var verificationMessage = new EmailMessage();
 
-                    verificationMessage = EmailMessage.SuccessSendRequest(request.Email);
+                    verificationMessage = EmailMessage.SuccessSendRequest(request.Email, request.ResponsiblePerson);
 
                     emailInboxService.EnqueueEmail(verificationMessage);
 

@@ -14,7 +14,7 @@ namespace ManagementBot.Enitis
         public List<Attachment> Attachments { get; set; }
 
 
-        public static EmailMessage SuccessSendRequest(string email)
+        public static EmailMessage SuccessSendRequest(string email, string fullname)
         {
             return new EmailMessage()
             {
@@ -57,7 +57,7 @@ namespace ManagementBot.Enitis
                     <body>
                         <div class='container'>
                             <h2>Your request has been successfully submitted!</h2>
-                            <p>Hello,</p>
+                            <p>Hello, {fullname}</p>
                             <p>We have received your request and started processing it. Our specialists will get in touch with you shortly.</p>
                             <p>Thank you for reaching out!</p>
                             <div class='footer'>
