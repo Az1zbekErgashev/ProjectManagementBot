@@ -1,4 +1,5 @@
 ﻿using ManagementBot.Commons;
+using ManagementBot.Data;
 using ManagementBot.Enitis;
 using ManagementBot.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using TrustyTalents.Service.Services.Emails;
 
 namespace ManagementBot.Service
 {
@@ -17,13 +19,15 @@ namespace ManagementBot.Service
         private readonly ITelegramBotClient botService;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<BotService> _logger;
-        public BotService(IGenericRepository<Users> userRepository, ITelegramBotClient botService, IGenericRepository<Requests> requestsRepository, IServiceScopeFactory scopeFactory, ILogger<BotService> logger)
+        private readonly IEmailInboxService emailInboxService;
+        public BotService(IGenericRepository<Users> userRepository, ITelegramBotClient botService, IGenericRepository<Requests> requestsRepository, IServiceScopeFactory scopeFactory, ILogger<BotService> logger, IEmailInboxService emailInboxService)
         {
             this.userRepository = userRepository;
             this.botService = botService;
             this.requestsRepository = requestsRepository;
             _scopeFactory = scopeFactory;
             _logger = logger;
+            this.emailInboxService = emailInboxService;
         }
 
         public async ValueTask HandleUpdateAsync(Update update)
@@ -286,6 +290,26 @@ namespace ManagementBot.Service
                     user.UpdatedAt = DateTime.UtcNow;
                     userRepository.UpdateAsync(user);
                     await userRepository.SaveChangeAsync();
+
+
+                    var existuser = await userRepository.GetAll(x => x.ChatId == chatId).Include(x => x.Requests).FirstOrDefaultAsync();
+
+                    var request = existuser?.Requests?.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var dbContext = scope.ServiceProvider.GetRequiredService<CrmDBContext>();
+                        var botRequest = new CrmRequest { RequestStatusId = 1, AdditionalInformation = request.AdditionalInformation, CompanyName = request.CompanyName, Department = request.Department, Email = request.Email, InquirySource = request.InquirySource, Notes = request.Notes, ProjectBudget = request.ProjectBudget, Priority = ProjectManagement.Domain.Enum.Priority.Normal, Status = ProjectManagement.Domain.Enum.ProjectStatus.ToDO};
+                        dbContext.Requests.Add(botRequest);
+                        await dbContext.SaveChangesAsync();
+                    }
+
+                    var verificationMessage = new EmailMessage();
+
+                    verificationMessage = EmailMessage.SuccessSendRequest(request.Email);
+
+                    emailInboxService.EnqueueEmail(verificationMessage);
+
                     return;
                 case State.submit_request:
                     await botService.DeleteMessage(chatId, messageId: messageText.MessageId);
