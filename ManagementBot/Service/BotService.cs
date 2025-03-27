@@ -183,6 +183,7 @@ namespace ManagementBot.Service
                     await userRepository.SaveChangeAsync();
                     return;
                 case State.send_phone_number:
+                    if (!string.IsNullOrEmpty(callbackQuery?.Data)) return;
                     await CreateRequest(true, user, user?.State, !string.IsNullOrEmpty(messageText?.Text) ? messageText?.Text : messageText?.Contact?.PhoneNumber);
                     await botService.SendMessage(chatId: chatId, text: TelegramTexts.SendEmail, parseMode: ParseMode.Markdown, replyMarkup: new ReplyKeyboardRemove());
 
@@ -192,7 +193,14 @@ namespace ManagementBot.Service
                     await userRepository.SaveChangeAsync();
                     return;
                 case State.send_email:
-                     if (!string.IsNullOrEmpty(callbackQuery?.Data)) return;
+                    if (!string.IsNullOrEmpty(callbackQuery?.Data)) return;
+
+                    if (string.IsNullOrWhiteSpace(messageText?.Text) || !IsValidEmail(messageText.Text))
+                    {
+                        await botService.SendMessage(chatId, "❌ Invalid email address. Please enter the correct email address.");
+                        return;
+                    }
+
                     await CreateRequest(false, user, user?.State, messageText?.Text);
                     await botService.SendMessage(chatId, TelegramTexts.SendResponsiblePerson, parseMode: ParseMode.Markdown);
 
@@ -322,6 +330,19 @@ namespace ManagementBot.Service
                     return;
                 default:
                     break;
+            }
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
             }
         }
 
