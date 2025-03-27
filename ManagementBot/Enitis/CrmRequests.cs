@@ -29,5 +29,6 @@ namespace ManagementBot.Enitis
         public string? AdditionalInformation { get; set; }
         public ProjectStatus Status { get; set; } = 0;
         public Priority Priority { get; set; } = Priority.Normal;
+        public long? ChatId { get; set; }
     }
 }
