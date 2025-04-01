@@ -307,7 +307,21 @@ namespace ManagementBot.Service
                     using (var scope = _scopeFactory.CreateScope())
                     {
                         var dbContext = scope.ServiceProvider.GetRequiredService<CrmDBContext>();
-                        var botRequest = new CrmRequest { ContactNumber = request.ContactNumber, RequestStatusId = 4, Date = DateTime.UtcNow.ToString("dd.MM.yyyy"), Deadline = DateTime.UtcNow.AddDays(3),  ResponsiblePerson = request.ResponsiblePerson, AdditionalInformation = request.AdditionalInformation, CompanyName = request.CompanyName, Department = request.Department, Email = request.Email, InquirySource = request.InquirySource, Notes = request.Notes, ProjectBudget = request.ProjectBudget, Priority = ProjectManagement.Domain.Enum.Priority.Normal, Status = ProjectManagement.Domain.Enum.ProjectStatus.ToDO, ChatId = chatId};
+                        var botRequest = new CrmRequest { ContactNumber = request.ContactNumber,
+                            RequestStatusId = 4,
+                            Date = DateTime.UtcNow.ToString("dd.MM.yyyy"),
+                            Deadline = DateTime.UtcNow.AddDays(3),
+                            ResponsiblePerson = request.ResponsiblePerson,
+                            AdditionalInformation = request.AdditionalInformation,
+                            ClientCompany = request.CompanyName,
+                            Department = request.Department,
+                            Email = request.Email,
+                            InquirySource = request.InquirySource,
+                            Notes = request.Notes, 
+                            ProjectBudget = request.ProjectBudget,
+                            Priority = ProjectManagement.Domain.Enum.Priority.Normal, 
+                            Status = ProjectManagement.Domain.Enum.ProjectStatus.ToDO, 
+                            ChatId = chatId};
                         dbContext.Requests.Add(botRequest);
                         await dbContext.SaveChangesAsync();
                     }
